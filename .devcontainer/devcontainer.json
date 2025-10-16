@@ -1,0 +1,12 @@
+{
+  "name": "Devcontainer",
+  "build": {
+    "dockerfile": "./Dockerfile"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": ["rust-lang.rust-analyzer", "JakeBecker.elixir-ls"]
+    }
+  },
+  "postCreateCommand": "mix local.hex --force && mix local.rebar --force"
+}
