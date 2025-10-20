@@ -118,7 +118,7 @@ fn pop(resource: ResourceArc<BitvecResource>) -> NifResult<Option<bool>> {
 }
 
 #[nif]
-fn pop(resource: ResourceArc<BitvecResource>, value: bool) -> NifResult<()> {
+fn push(resource: ResourceArc<BitvecResource>, value: bool) -> NifResult<()> {
     let mut bits = resource
         .0
         .lock()
@@ -143,6 +143,56 @@ fn repeat(bit: bool, len: usize) -> NifResult<ResourceArc<BitvecResource>> {
     let resource = ResourceArc::new(BitvecResource(Mutex::new(inner)));
 
     Ok(resource)
+}
+
+#[nif]
+fn reserve(resource: ResourceArc<BitvecResource>, additional: usize) -> NifResult<()> {
+    let mut bits = resource
+        .0
+        .lock()
+        .map_err(|_| raise_error(atoms::lock_fail()))?;
+
+    Ok(bits.reserve(additional))
+}
+
+#[nif]
+fn set_uninitialized(resource: ResourceArc<BitvecResource>, value: bool) -> NifResult<()> {
+    let mut bits = resource
+        .0
+        .lock()
+        .map_err(|_| raise_error(atoms::lock_fail()))?;
+
+    Ok(bits.set_uninitialized(value))
+}
+
+#[nif]
+fn shrink_to_fit(resource: ResourceArc<BitvecResource>) -> NifResult<()> {
+    let mut bits = resource
+        .0
+        .lock()
+        .map_err(|_| raise_error(atoms::lock_fail()))?;
+
+    Ok(bits.shrink_to_fit())
+}
+
+#[nif]
+fn swap_remove(resource: ResourceArc<BitvecResource>, index: usize) -> NifResult<bool> {
+    let mut bits = resource
+        .0
+        .lock()
+        .map_err(|_| raise_error(atoms::lock_fail()))?;
+
+    Ok(bits.swap_remove(index))
+}
+
+#[nif]
+fn truncate(resource: ResourceArc<BitvecResource>, new_len: usize) -> NifResult<()> {
+    let mut bits = resource
+        .0
+        .lock()
+        .map_err(|_| raise_error(atoms::lock_fail()))?;
+
+    Ok(bits.truncate(new_len))
 }
 
 #[inline]
