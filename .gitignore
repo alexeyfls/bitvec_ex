@@ -27,3 +27,5 @@ bitvec-*.tar
 
 # Rust binary artifacts
 /target/
+
+/priv/
