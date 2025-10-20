@@ -62,7 +62,7 @@ fn capacity(resource: ResourceArc<BitvecResource>) -> NifResult<usize> {
 }
 
 #[nif]
-fn clear(resource: ResourceArc<BitvecResource>) -> NifResult {
+fn clear(resource: ResourceArc<BitvecResource>) -> NifResult<()> {
     let mut bits = resource
         .0
         .lock()
