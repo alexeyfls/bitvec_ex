@@ -9,4 +9,11 @@ RUN apt-get update && \
     apt-get install -y elixir erlang-dev erlang-parsetools erlang-ssl erlang-inets && \
     mix local.hex --force && mix local.rebar --force
 
+RUN /bin/bash -c " \
+    rustup update stable && \
+    rustup component add rust-analyzer --toolchain stable && \
+    rust-analyzer --version && \
+    rustc --version \
+    "
+
 WORKDIR /workspace

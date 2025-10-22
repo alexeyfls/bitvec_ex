@@ -1,0 +1,5 @@
+{
+  "rust-analyzer.server.path": "/root/.cargo/bin/rust-analyzer",
+  "rust-analyzer.checkOnStartup": false,
+  "rust-analyzer.cargo.runBuildScripts": true
+}

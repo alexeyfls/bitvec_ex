@@ -4,10 +4,10 @@
 
   // These tasks can be run from CodeSandbox. Running one will open a log in the app.
   "tasks": {
-    "cargo watch -x run": {
-      "name": "cargo watch -x run",
-      "command": "cargo watch -x run",
-      "runAtStart": true
+    "Setup and Build": {
+      "name": "Setup and Build",
+      "command": "cargo clean && cargo check",
+      "init": true
     }
   }
 }
