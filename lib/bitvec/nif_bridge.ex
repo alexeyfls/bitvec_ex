@@ -8,8 +8,8 @@ defmodule Bitvec.NifBridge do
   @doc """
   Creates a new BitVec.
   """
-  @spec new(capacity :: pos_integer()) :: {:ok, Bitvec.t()}
-  def new(_capacity), do: :erlang.nif_error(:nif_not_loaded)
+  @spec new(capacity :: pos_integer(), ordering :: Types.ordering()) :: {:ok, Bitvec.t()}
+  def new(_capacity, _ordering), do: :erlang.nif_error(:nif_not_loaded)
 
   @doc """
   Gets the length of the BitVec.
