@@ -1,7 +1,7 @@
 use std::sync::Mutex;
 
 use bitvec::prelude::*;
-use rustler::{nif, Error as NifError, NifResult, Resource, ResourceArc};
+use rustler::{nif, Atom, Resource, ResourceArc};
 
 mod atoms {
     rustler::atoms! {
@@ -16,188 +16,55 @@ mod atoms {
         not_found,
         index_out_of_bounds,
         max_bucket_size_exceeded,
+
+        lsb0,
+        msb0,
     }
 }
 
-pub struct BitvecResource(Mutex<BitVec<u8, Msb0>>);
+enum InnerBitVec {
+    Msb(BitVec<u8, Msb0>),
+    Lsb(BitVec<u8, Lsb0>),
+}
+
+pub struct BitvecResource(Mutex<InnerBitVec>);
 
 #[rustler::resource_impl]
 impl Resource for BitvecResource {}
 
+macro_rules! with_bitvec {
+    ($resource:expr, $bv:ident => $body:expr) => {{
+        let guard = $resource.0.lock().map_err(|_| atoms::lock_fail())?;
+        match &*guard {
+            InnerBitVec::Msb($bv) => $body,
+            InnerBitVec::Lsb($bv) => $body,
+        }
+    }};
+    (mut $resource:expr, $bv:ident => $body:expr) => {{
+        let mut guard = $resource.0.lock().map_err(|_| atoms::lock_fail())?;
+        match &mut *guard {
+            InnerBitVec::Msb($bv) => $body,
+            InnerBitVec::Lsb($bv) => $body,
+        }
+    }};
+}
+
 #[nif]
-fn new(capacity: usize) -> NifResult<ResourceArc<BitvecResource>> {
-    let inner = bitvec![u8, Msb0; 0; capacity];
+fn new(capacity: usize, ordering: Atom) -> Result<ResourceArc<BitvecResource>, Atom> {
+    let inner = match ordering {
+        a if a == atoms::msb0() => InnerBitVec::Msb(bitvec![u8, Msb0; 0; capacity]),
+        a if a == atoms::lsb0() => InnerBitVec::Lsb(bitvec![u8, Lsb0; 0; capacity]),
+        _ => return Err(atoms::unsupported_type()),
+    };
+
     let resource = ResourceArc::new(BitvecResource(Mutex::new(inner)));
 
     Ok(resource)
 }
 
 #[nif]
-fn append(
-    target: ResourceArc<BitvecResource>,
-    source: ResourceArc<BitvecResource>,
-) -> NifResult<bool> {
-    let mut target_bits = target
-        .0
-        .lock()
-        .map_err(|_| raise_error(atoms::lock_fail()))?;
-    let mut source_bits = source
-        .0
-        .lock()
-        .map_err(|_| raise_error(atoms::lock_fail()))?;
-
-    target_bits.append(&mut source_bits);
-
-    Ok(true)
-}
-
-#[nif]
-fn capacity(resource: ResourceArc<BitvecResource>) -> NifResult<usize> {
-    let bits = resource
-        .0
-        .lock()
-        .map_err(|_| raise_error(atoms::lock_fail()))?;
-
-    Ok(bits.capacity())
-}
-
-#[nif]
-fn clear(resource: ResourceArc<BitvecResource>) -> NifResult<()> {
-    let mut bits = resource
-        .0
-        .lock()
-        .map_err(|_| raise_error(atoms::lock_fail()))?;
-
-    Ok(bits.clear())
-}
-
-#[nif]
-fn insert(resource: ResourceArc<BitvecResource>, index: usize, value: bool) -> NifResult<()> {
-    let mut bits = resource
-        .0
-        .lock()
-        .map_err(|_| raise_error(atoms::lock_fail()))?;
-
-    if bits.len() > index {
-        return Err(raise_error(atoms::index_out_of_bounds()));
-    }
-
-    bits.insert(index, value);
-
-    Ok(())
-}
-
-#[nif]
-fn is_empty(resource: ResourceArc<BitvecResource>) -> NifResult<bool> {
-    let bits = resource
-        .0
-        .lock()
-        .map_err(|_| raise_error(atoms::lock_fail()))?;
-
-    Ok(bits.is_empty())
-}
-
-#[nif]
-fn len(resource: ResourceArc<BitvecResource>) -> NifResult<usize> {
-    let bits = resource
-        .0
-        .lock()
-        .map_err(|_| raise_error(atoms::lock_fail()))?;
-
-    Ok(bits.len())
-}
-
-#[nif]
-fn pop(resource: ResourceArc<BitvecResource>) -> NifResult<Option<bool>> {
-    let mut bits = resource
-        .0
-        .lock()
-        .map_err(|_| raise_error(atoms::lock_fail()))?;
-
-    Ok(bits.pop())
-}
-
-#[nif]
-fn push(resource: ResourceArc<BitvecResource>, value: bool) -> NifResult<()> {
-    let mut bits = resource
-        .0
-        .lock()
-        .map_err(|_| raise_error(atoms::lock_fail()))?;
-
-    Ok(bits.push(value))
-}
-
-#[nif]
-fn remove(resource: ResourceArc<BitvecResource>, index: usize) -> NifResult<bool> {
-    let mut bits = resource
-        .0
-        .lock()
-        .map_err(|_| raise_error(atoms::lock_fail()))?;
-
-    Ok(bits.remove(index))
-}
-
-#[nif]
-fn repeat(bit: bool, len: usize) -> NifResult<ResourceArc<BitvecResource>> {
-    let inner = BitVec::<u8, Msb0>::repeat(bit, len);
-    let resource = ResourceArc::new(BitvecResource(Mutex::new(inner)));
-
-    Ok(resource)
-}
-
-#[nif]
-fn reserve(resource: ResourceArc<BitvecResource>, additional: usize) -> NifResult<()> {
-    let mut bits = resource
-        .0
-        .lock()
-        .map_err(|_| raise_error(atoms::lock_fail()))?;
-
-    Ok(bits.reserve(additional))
-}
-
-#[nif]
-fn set_uninitialized(resource: ResourceArc<BitvecResource>, value: bool) -> NifResult<()> {
-    let mut bits = resource
-        .0
-        .lock()
-        .map_err(|_| raise_error(atoms::lock_fail()))?;
-
-    Ok(bits.set_uninitialized(value))
-}
-
-#[nif]
-fn shrink_to_fit(resource: ResourceArc<BitvecResource>) -> NifResult<()> {
-    let mut bits = resource
-        .0
-        .lock()
-        .map_err(|_| raise_error(atoms::lock_fail()))?;
-
-    Ok(bits.shrink_to_fit())
-}
-
-#[nif]
-fn swap_remove(resource: ResourceArc<BitvecResource>, index: usize) -> NifResult<bool> {
-    let mut bits = resource
-        .0
-        .lock()
-        .map_err(|_| raise_error(atoms::lock_fail()))?;
-
-    Ok(bits.swap_remove(index))
-}
-
-#[nif]
-fn truncate(resource: ResourceArc<BitvecResource>, new_len: usize) -> NifResult<()> {
-    let mut bits = resource
-        .0
-        .lock()
-        .map_err(|_| raise_error(atoms::lock_fail()))?;
-
-    Ok(bits.truncate(new_len))
-}
-
-#[inline]
-fn raise_error(atom: rustler::Atom) -> NifError {
-    NifError::Term(Box::new(atom))
+fn len(resource: ResourceArc<BitvecResource>) -> Result<usize, Atom> {
+    with_bitvec!(resource, bits => Ok(bits.len()))
 }
 
 rustler::init!("Elixir.Bitvec.NifBridge");
