@@ -5,8 +5,6 @@ use rustler::{nif, Atom, Resource, ResourceArc};
 
 mod atoms {
     rustler::atoms! {
-        ok,
-        error,
         bad_reference,
         lock_fail,
         added,
@@ -16,47 +14,17 @@ mod atoms {
         not_found,
         index_out_of_bounds,
         max_bucket_size_exceeded,
-
-        lsb0,
-        msb0,
     }
 }
 
-enum InnerBitVec {
-    Msb(BitVec<u8, Msb0>),
-    Lsb(BitVec<u8, Lsb0>),
-}
-
-pub struct BitvecResource(Mutex<InnerBitVec>);
+pub struct BitvecResource(Mutex<BitVec<usize, Msb0>>);
 
 #[rustler::resource_impl]
 impl Resource for BitvecResource {}
 
-macro_rules! with_bitvec {
-    ($resource:expr, $bv:ident => $body:expr) => {{
-        let guard = $resource.0.lock().map_err(|_| atoms::lock_fail())?;
-        match &*guard {
-            InnerBitVec::Msb($bv) => $body,
-            InnerBitVec::Lsb($bv) => $body,
-        }
-    }};
-    (mut $resource:expr, $bv:ident => $body:expr) => {{
-        let mut guard = $resource.0.lock().map_err(|_| atoms::lock_fail())?;
-        match &mut *guard {
-            InnerBitVec::Msb($bv) => $body,
-            InnerBitVec::Lsb($bv) => $body,
-        }
-    }};
-}
-
 #[nif]
-fn new(capacity: usize, ordering: Atom) -> Result<ResourceArc<BitvecResource>, Atom> {
-    let inner = match ordering {
-        a if a == atoms::msb0() => InnerBitVec::Msb(bitvec![u8, Msb0; 0; capacity]),
-        a if a == atoms::lsb0() => InnerBitVec::Lsb(bitvec![u8, Lsb0; 0; capacity]),
-        _ => return Err(atoms::unsupported_type()),
-    };
-
+fn new(capacity: usize) -> Result<ResourceArc<BitvecResource>, Atom> {
+    let inner = bitvec![usize, Msb0; 0; capacity];
     let resource = ResourceArc::new(BitvecResource(Mutex::new(inner)));
 
     Ok(resource)
@@ -64,7 +32,25 @@ fn new(capacity: usize, ordering: Atom) -> Result<ResourceArc<BitvecResource>, A
 
 #[nif]
 fn len(resource: ResourceArc<BitvecResource>) -> Result<usize, Atom> {
-    with_bitvec!(resource, bits => Ok(bits.len()))
+    with_bitvec(&resource, |bits| Ok(bits.len()))
+}
+
+#[inline]
+fn with_bitvec<F, T>(resource: &ResourceArc<BitvecResource>, f: F) -> Result<T, Atom>
+where
+    F: FnOnce(&BitVec<usize, Msb0>) -> Result<T, Atom>,
+{
+    let bits = resource.0.lock().map_err(|_| atoms::lock_fail())?;
+    f(&*bits)
+}
+
+#[inline]
+fn with_bitvec_mut<F, R>(resource: &ResourceArc<BitvecResource>, f: F) -> Result<R, Atom>
+where
+    F: FnOnce(&mut BitVec<usize, Msb0>) -> Result<R, Atom>,
+{
+    let mut guard = resource.0.lock().map_err(|_| atoms::lock_fail())?;
+    f(&mut *guard)
 }
 
 rustler::init!("Elixir.Bitvec.NifBridge");

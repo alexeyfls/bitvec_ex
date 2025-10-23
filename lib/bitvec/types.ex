@@ -21,6 +21,4 @@ defmodule Bitvec.Types do
   """
   @type common_errors ::
           {:error, :bad_reference} | {:error, :lock_fail} | {:error, :unsupported_type}
-
-  @type ordering() :: {:msb0 | :lsb0}
 end

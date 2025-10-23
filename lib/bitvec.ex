@@ -3,10 +3,10 @@ defmodule Bitvec do
 
   @type t :: Types.bit_vec()
 
-  @spec new(capacity :: pos_integer(), ordering :: Types.ordering()) ::
+  @spec new(capacity :: pos_integer()) ::
           t() | Types.common_errors()
-  def new(capacity, ordering) do
-    {:ok, resource} = NifBridge.new(capacity, ordering)
+  def new(capacity) do
+    {:ok, resource} = NifBridge.new(capacity)
     resource
   end
 
