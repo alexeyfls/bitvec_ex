@@ -23,16 +23,138 @@ pub struct BitvecResource(Mutex<BitVec<usize, Msb0>>);
 impl Resource for BitvecResource {}
 
 #[nif]
-fn new(capacity: usize) -> Result<ResourceArc<BitvecResource>, Atom> {
-    let inner = bitvec![usize, Msb0; 0; capacity];
+fn new() -> Result<ResourceArc<BitvecResource>, Atom> {
+    let inner = BitVec::<usize, Msb0>::new();
     let resource = ResourceArc::new(BitvecResource(Mutex::new(inner)));
 
     Ok(resource)
 }
 
 #[nif]
+fn with_capacity(capacity: usize) -> Result<ResourceArc<BitvecResource>, Atom> {
+    let inner = BitVec::<usize, Msb0>::with_capacity(capacity);
+    let resource = ResourceArc::new(BitvecResource(Mutex::new(inner)));
+
+    Ok(resource)
+}
+
+#[nif]
+fn capacity(resource: ResourceArc<BitvecResource>) -> Result<usize, Atom> {
+    with_bitvec(&resource, |bits| Ok(bits.capacity()))
+}
+
+#[nif]
+fn reserve(resource: ResourceArc<BitvecResource>, additional: usize) -> Result<(), Atom> {
+    with_bitvec_mut(&resource, |bits| Ok(bits.reserve(additional)))
+}
+
+#[nif]
+fn reserve_exact(resource: ResourceArc<BitvecResource>, additional: usize) -> Result<(), Atom> {
+    with_bitvec_mut(&resource, |bits| Ok(bits.reserve_exact(additional)))
+}
+
+#[nif]
+fn shrink_to_fit(resource: ResourceArc<BitvecResource>) -> Result<(), Atom> {
+    with_bitvec_mut(&resource, |bits| Ok(bits.shrink_to_fit()))
+}
+
+#[nif]
+fn truncate(resource: ResourceArc<BitvecResource>, new_len: usize) -> Result<(), Atom> {
+    with_bitvec_mut(&resource, |bits| Ok(bits.truncate(new_len)))
+}
+
+#[nif]
+fn swap_remove(resource: ResourceArc<BitvecResource>, index: usize) -> Result<bool, Atom> {
+    with_bitvec_mut(&resource, |bits| Ok(bits.swap_remove(index)))
+}
+
+#[nif]
+fn insert(resource: ResourceArc<BitvecResource>, index: usize, value: bool) -> Result<(), Atom> {
+    with_bitvec_mut(&resource, |bits| Ok(bits.insert(index, value)))
+}
+
+#[nif]
+fn remove(resource: ResourceArc<BitvecResource>, index: usize) -> Result<bool, Atom> {
+    with_bitvec_mut(&resource, |bits| Ok(bits.remove(index)))
+}
+
+#[nif]
+fn push(resource: ResourceArc<BitvecResource>, value: bool) -> Result<(), Atom> {
+    with_bitvec_mut(&resource, |bits| Ok(bits.push(value)))
+}
+
+#[nif]
+fn pop(resource: ResourceArc<BitvecResource>) -> Result<Option<bool>, Atom> {
+    with_bitvec_mut(&resource, |bits| Ok(bits.pop()))
+}
+
+#[nif]
+fn append(
+    target: ResourceArc<BitvecResource>,
+    other: ResourceArc<BitvecResource>,
+) -> Result<(), Atom> {
+    with_bitvec_mut(&other, |other_bits| {
+        with_bitvec_mut(&target, |target_bits| Ok(target_bits.append(other_bits)))
+    })
+}
+
+#[nif]
+fn clear(resource: ResourceArc<BitvecResource>) -> Result<(), Atom> {
+    with_bitvec_mut(&resource, |bits| Ok(bits.clear()))
+}
+
+#[nif]
 fn len(resource: ResourceArc<BitvecResource>) -> Result<usize, Atom> {
     with_bitvec(&resource, |bits| Ok(bits.len()))
+}
+
+#[nif]
+fn is_empty(resource: ResourceArc<BitvecResource>) -> Result<bool, Atom> {
+    with_bitvec(&resource, |bits| Ok(bits.is_empty()))
+}
+
+#[nif]
+fn split_off(
+    resource: ResourceArc<BitvecResource>,
+    at: usize,
+) -> Result<ResourceArc<BitvecResource>, Atom> {
+    with_bitvec_mut(&resource, |bits| {
+        let inner = bits.split_off(at);
+        let resource = ResourceArc::new(BitvecResource(Mutex::new(inner)));
+
+        Ok(resource)
+    })
+}
+
+#[nif]
+fn resize(resource: ResourceArc<BitvecResource>, new_len: usize, value: bool) -> Result<(), Atom> {
+    with_bitvec_mut(&resource, |bits| Ok(bits.resize(new_len, value)))
+}
+
+#[nif]
+fn repeat(bit: bool, len: usize) -> Result<ResourceArc<BitvecResource>, Atom> {
+    let inner = BitVec::<usize, Msb0>::repeat(bit, len);
+    let resource = ResourceArc::new(BitvecResource(Mutex::new(inner)));
+
+    Ok(resource)
+}
+
+#[nif]
+fn from_vec(vec: Vec<usize>) -> Result<ResourceArc<BitvecResource>, Atom> {
+    let inner = BitVec::<usize, Msb0>::from_vec(vec);
+    let resource = ResourceArc::new(BitvecResource(Mutex::new(inner)));
+
+    Ok(resource)
+}
+
+#[nif]
+fn set_uninitialized(resource: ResourceArc<BitvecResource>, value: bool) -> Result<(), Atom> {
+    with_bitvec_mut(&resource, |bits| Ok(bits.set_uninitialized(value)))
+}
+
+#[nif]
+fn force_align(resource: ResourceArc<BitvecResource>) -> Result<(), Atom> {
+    with_bitvec_mut(&resource, |bits| Ok(bits.force_align()))
 }
 
 #[inline]

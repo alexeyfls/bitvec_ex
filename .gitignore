@@ -28,4 +28,5 @@ bitvec-*.tar
 # Rust binary artifacts
 /target/
 
-/priv/
+# The directory that rustler will write compiled artifacts to.
+/priv

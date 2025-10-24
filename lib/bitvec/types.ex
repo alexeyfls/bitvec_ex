@@ -21,4 +21,13 @@ defmodule Bitvec.Types do
   """
   @type common_errors ::
           {:error, :bad_reference} | {:error, :lock_fail} | {:error, :unsupported_type}
+
+  @typedoc "A successful result of T, or an error"
+  @type result(t) :: {:ok, t} | common_errors()
+
+  @typedoc "A value that can be T or nil"
+  @type option(t) :: t | nil
+
+  @typedoc "A successful unwrapped value of T, or an error"
+  @type unwrapped_result(t) :: t | common_errors()
 end
