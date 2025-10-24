@@ -30,3 +30,5 @@ bitvec-*.tar
 
 # The directory that rustler will write compiled artifacts to.
 /priv
+
+/.vscode
