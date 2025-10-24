@@ -125,5 +125,8 @@ Bitvec.jemalloc_allocation_info()
 
 ## 📄 License
 
-This project is licensed under the terms of the **MIT License** / **Apache 2.0 License**.  
-See the [LICENSE](./LICENSE) file for details.
+This project is licensed under the terms of the **MIT License**.
+See the [LICENSE](./LICENSE) file for full text.
+
+Portions of this software are derived from the [bitvec](https://github.com/ferrilab/bitvec) crate,
+which is also licensed under the **MIT License**.
