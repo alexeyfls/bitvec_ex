@@ -118,6 +118,11 @@ defmodule Bitvec do
     with {:ok, response} <- NifBridge.from_vec(vec), do: response
   end
 
+  @spec into_vec(resource :: Types.bit_vec()) :: Types.unwrapped_result([non_neg_integer()])
+  def into_vec(resource) do
+    with {:ok, response} <- NifBridge.into_vec(resource), do: response
+  end
+
   @spec set_uninitialized(resource :: Types.bit_vec(), value :: boolean()) ::
           Types.unwrapped_result(Types.bit_vec())
   def set_uninitialized(resource, value) do
@@ -127,6 +132,17 @@ defmodule Bitvec do
   @spec force_align(resource :: Types.bit_vec()) :: Types.unwrapped_result(Types.bit_vec())
   def force_align(resource) do
     with {:ok} <- NifBridge.force_align(resource), do: resource
+  end
+
+  @spec swap(resource :: Types.bit_vec(), a :: non_neg_integer(), b :: non_neg_integer()) ::
+          Types.unwrapped_result(Types.bit_vec())
+  def swap(resource, a, b) do
+    with {:ok} <- NifBridge.swap(resource, a, b), do: resource
+  end
+
+  @spec reverse(resource :: Types.bit_vec()) :: Types.unwrapped_result(Types.bit_vec())
+  def reverse(resource) do
+    with {:ok} <- NifBridge.reverse(resource), do: resource
   end
 
   @doc """

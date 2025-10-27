@@ -131,6 +131,12 @@ defmodule Bitvec.NifBridge do
   def from_vec(_vec), do: :erlang.nif_error(:nif_not_loaded)
 
   @doc """
+  Converts a bit-vector into a Vec of its underlying storage.
+  """
+  @spec into_vec(resource :: Types.bit_vec()) :: Types.result([non_neg_integer()])
+  def into_vec(_resource), do: :erlang.nif_error(:nif_not_loaded)
+
+  @doc """
   Sets the uninitialized bits of a bit-vector to a known value.
   """
   @spec set_uninitialized(resource :: Types.bit_vec(), value :: boolean()) :: Types.result(:ok)
@@ -141,4 +147,17 @@ defmodule Bitvec.NifBridge do
   """
   @spec force_align(resource :: Types.bit_vec()) :: Types.result(:ok)
   def force_align(_resource), do: :erlang.nif_error(:nif_not_loaded)
+
+  @doc """
+  Exchanges the bit values at two indices.
+  """
+  @spec swap(resource :: Types.bit_vec(), a :: non_neg_integer(), b :: non_neg_integer()) ::
+          Types.result(:ok)
+  def swap(_resource, _a, _b), do: :erlang.nif_error(:nif_not_loaded)
+
+  @doc """
+  Reverses the order of bits in a bit-slice.
+  """
+  @spec reverse(resource :: Types.bit_vec()) :: Types.result(:ok)
+  def reverse(_resource), do: :erlang.nif_error(:nif_not_loaded)
 end

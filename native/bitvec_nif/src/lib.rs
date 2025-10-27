@@ -148,6 +148,13 @@ fn from_vec(vec: Vec<usize>) -> Result<ResourceArc<BitvecResource>, Atom> {
 }
 
 #[nif]
+fn into_vec(resource: ResourceArc<BitvecResource>) -> Result<Vec<usize>, Atom> {
+    with_bitvec_mut(&resource, |bits: &mut BitVec<usize, Msb0>| {
+        Ok(bits.clone().into_vec())
+    })
+}
+
+#[nif]
 fn set_uninitialized(resource: ResourceArc<BitvecResource>, value: bool) -> Result<(), Atom> {
     with_bitvec_mut(&resource, |bits| Ok(bits.set_uninitialized(value)))
 }
@@ -155,6 +162,16 @@ fn set_uninitialized(resource: ResourceArc<BitvecResource>, value: bool) -> Resu
 #[nif]
 fn force_align(resource: ResourceArc<BitvecResource>) -> Result<(), Atom> {
     with_bitvec_mut(&resource, |bits| Ok(bits.force_align()))
+}
+
+#[nif]
+fn swap(resource: ResourceArc<BitvecResource>, a: usize, b: usize) -> Result<(), Atom> {
+    with_bitvec_mut(&resource, |bits| Ok(bits.swap(a, b)))
+}
+
+#[nif]
+fn reverse(resource: ResourceArc<BitvecResource>) -> Result<(), Atom> {
+    with_bitvec_mut(&resource, |bits| Ok(bits.reverse()))
 }
 
 #[inline]
